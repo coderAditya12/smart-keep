@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es2023" /* Modern JS features */,
+    "module": "nodenext" /* Standard Node.js module system */,
+    "rootDir": "./src" /* Input folder */,
+    "outDir": "./dist" /* Output folder */,
+    "strict": true /* Enforce type safety */,
+    "esModuleInterop": true /* Better compatibility with modules */,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": false
+  }
+}
