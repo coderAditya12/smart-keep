@@ -1,12 +1,14 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+import express from "express";
 import connectDB from "./utilis/db.js";
 import aiRoute from "./route/ArticleRoute.js";
-dotenv.config();
+import userRoute from "./route/userRoute.js";
 const app = express();
 const port = 3000;
 app.use(express.json());
 app.use("/api", aiRoute);
+app.use("/api", userRoute);
 app.get("/", (req, res) => {
     res.send("Hello World!");
 });
