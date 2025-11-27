@@ -4,8 +4,13 @@ import express from "express";
 import connectDB from "./utilis/db.js";
 import aiRoute from "./route/ArticleRoute.js";
 import userRoute from "./route/userRoute.js";
+import cors from "cors";
 const app = express();
 const port = 3000;
+app.use(cors({
+    origin: "*",
+    methods: "*",
+}));
 app.use(express.json());
 app.use("/api", aiRoute);
 app.use("/api", userRoute);
