@@ -1,4 +1,3 @@
-// import * as cheerio from "cheerio";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -68,5 +67,18 @@ export const analyzeAndSave = async (req, res) => {
             message: "Failed to process article",
             error: error.message,
         });
+    }
+};
+export const getArticles = async (req, res) => {
+    const { userId } = req.params;
+    if (!userId) {
+        res.status(404).json("userId is required");
+    }
+    try {
+        const allArticles = await Article.find({ userId });
+        res.status(200).json(allArticles);
+    }
+    catch (error) {
+        res.status(500).json("internal Server error");
     }
 };
