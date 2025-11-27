@@ -1,5 +1,5 @@
 import React from "react";
-import { ExternalLink, Tag, Calendar, Clock } from "lucide-react";
+import { ExternalLink, Tag, Calendar, } from "lucide-react";
 
 interface ArticleProps {
   article: {
