@@ -21,9 +21,17 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
     }
 
     // 3. Scrape with Puppeteer (Bypasses Cloudflare)
-    // Launch a headless browser
     const browser = await puppeteer.launch({
       headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage", // Critical for Docker/Render limits
+        "--single-process", // Crucial for low-resource environments
+        "--no-zygote",
+      ],
+      // This line forces Puppeteer to use the installed Chrome in the cache
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
 
     const page = await browser.newPage();
