@@ -46,7 +46,7 @@ export const DashboardPage: React.FC = () => {
     if (!user) return;
     try {
       const res = await axios.get(
-        `${API_URL}/articles/${user._id}`
+        `${API_URL}/api/articles/${user._id}`
       );
       setArticles(res.data);
     } catch (error) {
@@ -66,7 +66,7 @@ export const DashboardPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `${API_URL}/summary`,
+        `${API_URL}/api/summary`,
         {
           url: url,
           userId: user._id,
