@@ -1,17 +1,21 @@
 import { Request, Response } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import puppeteer from "puppeteer"; // We use this instead of axios now
+import puppeteer, { Browser } from "puppeteer";
 import * as cheerio from "cheerio";
-import dotenv from "dotenv";
+import dotenv from "dotenv"; // Removed .js extension
 import { Article } from "../models/Article.model.js";
+
 dotenv.config();
+
 export const analyzeAndSave = async (req: Request, res: Response) => {
+  let browser: Browser | null = null;
+
   try {
+    // 1. Validation & Setup
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is missing from environment variables");
     }
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
     const { url, userId } = req.body;
 
     // 2. Check for Duplicates
@@ -20,42 +24,59 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
       return res.status(200).json(existingArticle);
     }
 
-    // 3. Scrape with Puppeteer (Bypasses Cloudflare)
-    const browser = await puppeteer.launch({
+    // 3. Scrape with Puppeteer (Memory Optimized)
+    browser = await puppeteer.launch({
       headless: true,
+      pipe: true, // Use pipe instead of WebSocket for stability on Render
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage", // Critical for Docker/Render limits
-        "--single-process", // Crucial for low-resource environments
+        "--disable-dev-shm-usage", // Critical for low-RAM environments
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+        "--no-first-run",
         "--no-zygote",
+        "--disable-extensions",
+        "--disable-features=IsolateOrigins,site-per-process", // Note the correct syntax
+        "--disable-software-rasterizer",
+        "--mute-audio",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
       ],
-      // This line forces Puppeteer to use the installed Chrome in the cache
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
-    // Get the full HTML
+    const page = await browser.newPage();
+
+    // Block Images/Fonts/CSS to save RAM
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      const resourceType = req.resourceType();
+      if (
+        ["image", "stylesheet", "font", "media", "other"].includes(resourceType)
+      ) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+
+    // Navigate (Fail fast if site is too heavy: 30s timeout)
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     const html = await page.content();
 
-    // Close the browser to free up RAM
+    // Close browser immediately after getting HTML
     await browser.close();
+    browser = null;
 
-    // 4. Clean the Content with Cheerio
+    // 4. Clean Content with Cheerio
     const $ = cheerio.load(html);
-
-    // Remove junk
     $(
       "script, style, nav, footer, iframe, header, aside, .ad, .advertisement, .cookie-banner"
     ).remove();
 
-    // Get text
-    const rawText = $("body")
-      .text()
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 10000); // Increased limit slightly
+    const rawText = $("body").text().replace(/\s+/g, " ").trim().slice(0, 7000); // Limit text length for token optimization
+
     const metaTitle = $("title").text().trim() || "Untitled Article";
 
     if (rawText.length < 100) {
@@ -65,7 +86,7 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
     }
 
     // 5. AI Processing
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // Use 1.5-flash (Stable)
 
     const prompt = `
       Analyze the following article text.
@@ -91,8 +112,8 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
     try {
       aiData = JSON.parse(cleanJson);
     } catch (e) {
-      // Fallback if AI returns bad JSON
       console.error("AI JSON Parse Error:", cleanJson);
+      // Fallback
       aiData = {
         summary: "Summary generation failed, but link is saved.",
         tags: ["Uncategorized"],
@@ -112,23 +133,28 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
 
     res.status(201).json(newArticle);
   } catch (error: any) {
-    console.error("Analysis Failed:", error);
+    console.error("Analysis Failed:", error.message);
     res.status(500).json({
       message: "Failed to process article",
       error: error.message || "Unknown error",
     });
+  } finally {
+    // Critical: Ensure browser closes even if errors occur
+    if (browser) {
+      await browser.close().catch(() => console.log("Browser closure failed"));
+    }
   }
 };
 
 export const getArticles = async (req: Request, res: Response) => {
-  const { userId } = req.params;
-  if (!userId) {
-    res.status(404).json("userId is required");
-  }
   try {
-    const allArticles = await Article.find({ userId });
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+    const allArticles = await Article.find({ userId }).sort({ createdAt: -1 });
     res.status(200).json(allArticles);
   } catch (error) {
-    res.status(500).json("internal Server error");
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
