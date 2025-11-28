@@ -2,18 +2,16 @@
 
 SmartKeep solves the problem of information overload. Instead of a growing list of bookmarks you never read, SmartKeep uses **Generative AI (Gemini)** to instantly read, summarize, and auto-tag articles for you.
 
-## 🚀 Features
-* **AI Summarization:** Extracts the core value of an article in 3 sentences.
-* **Intelligent Auto-Tagging:** Automatically categorizes content (e.g., "React", "Finance").
-* **Mobile-First Design:** A sleek, dark-mode UI optimized for touch devices.
-* **Duplicate Prevention:** Smart backend logic prevents saving the same URL twice.
+## 🚀 Key Features
+* **Cloudflare-Proof Scraping:** Uses `Puppeteer` (Headless Chrome) to bypass bot protection on sites like Medium or DataCamp.
+* **AI Summarization:** Gemini 2.5 Flash generates concise 3-bullet summaries and auto-tags content.
+* **Identity-Based Auth:** Simple, passwordless login flow (Email/Name) allows users to maintain their own private library.
+* **Persistent State:** Uses `Zustand` with local storage persistence to keep users logged in.
 
 ## 🛠 Tech Stack
-* **Frontend:** React, TypeScript, Tailwind CSS (Dark Mode).
-* **Backend:** Node.js, Express, TypeScript.
-* **Database:** MongoDB (with Mongoose).
-* **AI Engine:** Google Gemini 1.5 Flash.
-* **Scraper:** Cheerio (for raw HTML parsing).
+* **Frontend:** React, TypeScript, Tailwind CSS, Zustand, Framer Motion (for transitions).
+* **Backend:** Node.js, Express, Puppeteer, Cheerio.
+* **Database:** MongoDB.
 
 ## ⚙️ Installation & Setup
 
