@@ -5,6 +5,9 @@ SmartKeep solves the problem of information overload. Instead of a growing list 
 ## 🚀 Key Features
 * **Cloudflare-Proof Scraping:** Uses `Puppeteer` (Headless Chrome) to bypass bot protection on sites like Medium or DataCamp.
 * **AI Summarization:** Gemini 2.5 Flash generates concise 3-bullet summaries and auto-tags content.
+* **Intelligent Auto-Tagging:** Automatically categorizes content (e.g., "React", "Finance").
+* **Mobile-First Design:** A sleek, dark-mode UI optimized for touch devices.
+* **Duplicate Prevention:** Smart backend logic prevents saving the same URL twice.
 * **Identity-Based Auth:** Simple, passwordless login flow (Email/Name) allows users to maintain their own private library.
 * **Persistent State:** Uses `Zustand` with local storage persistence to keep users logged in.
 
