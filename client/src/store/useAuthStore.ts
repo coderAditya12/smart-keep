@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 
 interface User {
   _id: string;
@@ -12,16 +12,17 @@ interface AuthState {
   login: (userData: User) => void;
   logout: () => void;
 }
-
 export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      login: (userData) => set({ user: userData }),
-      logout: () => set({ user: null }),
-    }),
-    {
-      name: "smartkeep-storage", // Key name in localStorage
-    }
+  devtools(
+    persist(
+      (set) => ({
+        user: null,
+        login: (userData) => set({ user: userData }),
+        logout: () => set({ user: null }),
+      }),
+      {
+        name: "smartkeep-storage", // Key name in localStorage
+      }
+    )
   )
 );

@@ -24,7 +24,6 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@types/mongoose": "^5.11.96",
-    "axios": "^1.13.2",
     "cheerio": "^1.1.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
