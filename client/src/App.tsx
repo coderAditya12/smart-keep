@@ -2,11 +2,10 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LandingPage } from "./page/Home";
 import { LoginPage } from "./page/Welcome";
 import Dashboard from "./page/Article";
-// import { useAuthStore } from "./store/useAuthStore";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 const App = () => {
-  // const {user} = useAuthStore();
   return (
     <BrowserRouter>
       <Routes>
