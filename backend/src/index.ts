@@ -21,6 +21,5 @@ app.get("/", (req: Request, res: Response) => {
 });
 app.listen(port, () => {
   connectDB();
-  console.log("Starting server...");
   console.log(`Server is running at http://localhost:${port}`);
 });

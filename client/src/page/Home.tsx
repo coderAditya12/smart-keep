@@ -43,7 +43,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-medium text-violet-400 mb-8 animate-fade-in-up">
             <Zap size={12} className="fill-current" />
-            <span>Powered by Gemini 1.5 AI</span>
+            <span>Powered by Gemini 2.5 flash AI</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-[1.1]">

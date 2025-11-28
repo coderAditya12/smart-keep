@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ArticleCard } from "../components/ArticleCard";
 import { useAuthStore } from "../store/useAuthStore";
+import { API_URL } from "../utils/api";
 
 // Define Article Interface
 interface Article {
@@ -45,7 +46,7 @@ export const DashboardPage: React.FC = () => {
     if (!user) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/articles/${user._id}`
+        `${API_URL}/articles/${user._id}`
       );
       setArticles(res.data);
     } catch (error) {
@@ -65,7 +66,7 @@ export const DashboardPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/articles/analyze",
+        `${API_URL}/summary`,
         {
           url: url,
           userId: user._id,

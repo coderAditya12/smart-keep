@@ -1,47 +1,67 @@
 import { Request, Response } from "express";
-import axios from "axios";
-import * as cheerio from "cheerio";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import puppeteer from "puppeteer"; // We use this instead of axios now
+import * as cheerio from "cheerio";
+import dotenv from "dotenv";
 import { Article } from "../models/Article.model.js";
-
+dotenv.config();
 export const analyzeAndSave = async (req: Request, res: Response) => {
   try {
-    const { url, userId } = req.body; // In a real app, userId comes from the auth token
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is missing from environment variables");
     }
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // 1. Check if we already have this URL for this user (Prevent duplicates)
+
+    const { url, userId } = req.body;
+
+    // 2. Check for Duplicates
     const existingArticle = await Article.findOne({ userId, originalUrl: url });
     if (existingArticle) {
-      return res.status(200).json(existingArticle); // Return existing one instead of reprocessing
+      return res.status(200).json(existingArticle);
     }
 
-    // 2. Scrape the Web Page (The "Eyes" of your app)
-    // We use Axios to get the raw HTML
-    const { data: html } = await axios.get(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      }, // Fake a browser so websites don't block us
+    // 3. Scrape with Puppeteer (Bypasses Cloudflare)
+    // Launch a headless browser
+    const browser = await puppeteer.launch({
+      headless: true,
     });
 
-    // 3. Clean the Content (The "Filter")
-    // Cheerio lets us use jQuery syntax on the server
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+
+    // Get the full HTML
+    const html = await page.content();
+
+    // Close the browser to free up RAM
+    await browser.close();
+
+    // 4. Clean the Content with Cheerio
     const $ = cheerio.load(html);
 
-    // Remove scripts, styles, and ads to save token costs
-    $("script, style, nav, footer, iframe, .ad, .advertisement").remove();
+    // Remove junk
+    $(
+      "script, style, nav, footer, iframe, header, aside, .ad, .advertisement, .cookie-banner"
+    ).remove();
 
-    // Get the main text content (limit to ~5000 chars to avoid token limits)
-    const rawText = $("body").text().replace(/\s+/g, " ").trim().slice(0, 5000);
+    // Get text
+    const rawText = $("body")
+      .text()
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 10000); // Increased limit slightly
     const metaTitle = $("title").text().trim() || "Untitled Article";
 
-    // 4. AI Processing (The "Brain")
+    if (rawText.length < 100) {
+      throw new Error(
+        "Could not extract enough text from this page. It might be behind a login."
+      );
+    }
+
+    // 5. AI Processing
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
-      Analyze the following text from a webpage.
+      Analyze the following article text.
       Return a VALID JSON object with exactly these keys:
       - "summary": A short paragraph summarizing the content (max 3 sentences).
       - "tags": An array of 3-5 short category tags (strings).
@@ -57,16 +77,27 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
     const response = await result.response;
     const textResponse = response.text();
 
-    // 5. Safe Parsing
-    // Sometimes AI wraps JSON in \`\`\`json ... \`\`\`, we need to clean that
+    // Clean Markdown wrapper if present
     const cleanJson = textResponse.replace(/```json|```/g, "").trim();
-    const aiData = JSON.parse(cleanJson);
+
+    let aiData;
+    try {
+      aiData = JSON.parse(cleanJson);
+    } catch (e) {
+      // Fallback if AI returns bad JSON
+      console.error("AI JSON Parse Error:", cleanJson);
+      aiData = {
+        summary: "Summary generation failed, but link is saved.",
+        tags: ["Uncategorized"],
+        title: metaTitle,
+      };
+    }
 
     // 6. Save to Database
     const newArticle = await Article.create({
       userId,
       originalUrl: url,
-      title: aiData.title || metaTitle, // Fallback to scraped title if AI fails
+      title: aiData.title || metaTitle,
       aiSummary: aiData.summary,
       tags: aiData.tags,
       isRead: false,
@@ -77,10 +108,11 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
     console.error("Analysis Failed:", error);
     res.status(500).json({
       message: "Failed to process article",
-      error: error.message,
+      error: error.message || "Unknown error",
     });
   }
 };
+
 export const getArticles = async (req: Request, res: Response) => {
   const { userId } = req.params;
   if (!userId) {

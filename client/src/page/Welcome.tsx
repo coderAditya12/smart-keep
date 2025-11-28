@@ -26,7 +26,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       // 1. Call Backend
-      const res = await axios.post(`${API_URL}`, {
+      const res = await axios.post(`${API_URL}/auth`, {
         email,
         name,
       });
