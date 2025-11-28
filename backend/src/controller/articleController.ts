@@ -33,7 +33,6 @@ export const analyzeAndSave = async (req: Request, res: Response) => {
       // This line forces Puppeteer to use the installed Chrome in the cache
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
-
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
