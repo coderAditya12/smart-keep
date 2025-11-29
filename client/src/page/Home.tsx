@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Sparkles,
   Zap,
@@ -29,12 +29,12 @@ export const LandingPage: React.FC = () => {
             </div>
             <span className="text-xl font-bold tracking-tight">SmartKeep</span>
           </div>
-          <button
-            onClick={() => navigate("/login")}
+          <Link
+            to="/login"
             className="text-sm font-medium text-zinc-300 hover:text-white transition-colors"
           >
             Log in
-          </button>
+          </Link>
         </div>
       </nav>
 
@@ -60,8 +60,8 @@ export const LandingPage: React.FC = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={() => navigate("/login")}
+            <Link
+              to="/login"
               className="group w-full sm:w-auto px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
             >
               Get Started for Free
@@ -69,7 +69,7 @@ export const LandingPage: React.FC = () => {
                 size={20}
                 className="group-hover:translate-x-1 transition-transform"
               />
-            </button>
+            </Link>
             <button className="w-full sm:w-auto px-8 py-4 bg-zinc-900 border border-zinc-800 text-white rounded-full font-medium hover:bg-zinc-800 transition-colors">
               View Demo
             </button>
